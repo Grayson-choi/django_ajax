@@ -10,6 +10,7 @@ from django.contrib.auth.forms import (
     UserCreationForm, 
     PasswordChangeForm,
 )
+from django.http import JsonResponse
 from .forms import CustomUserChangeForm, CustomUserCreationForm
 
 
@@ -122,8 +123,16 @@ def follow(request, user_pk):
             # if request.user in person.followers.all():
                 # 팔로우 끊음
                 you.followers.remove(me)
+                followed = False
             else:
                 # 팔로우 신청
                 you.followers.add(me)
-        return redirect('accounts:profile', you.username)
+                followed = True
+
+            follow_status = {
+                'followers_count': you.followers.count(),
+                'followings_count': you.followings.count(),
+                'followed': followed,
+            }
+        return JsonResponse(follow_status)
     return redirect('accounts:login')

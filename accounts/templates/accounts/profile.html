@@ -5,12 +5,12 @@
 
 {% with followings=person.followings.all followers=person.followers.all %}
   <div>
-    <div>
+    <div id="follow-count">
       팔로잉 : {{ followings|length }} / 팔로워 : {{ followers|length }}
     </div>
     {% if request.user != person %}
       <div>
-        <form action="{% url 'accounts:follow' person.pk %}" method="POST">
+        <form id="follow-form" data-user-id="{{ person.pk }}">
           {% csrf_token %}
           {% if request.user in followers %}
             <button>언팔로우</button>
@@ -48,4 +48,39 @@
 <hr>
 
 <a href="{% url 'articles:index' %}">[back]</a>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  const form = document.querySelector('#follow-form')
+  //console.log(form)
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault()
+    const userId = event.target.dataset.userId
+
+    axios({
+      method: 'post',
+      url: `/accounts/${userId}/follow/`,
+      headers: { 'X-CSRFToken': csrftoken },
+    })
+    .then(response => {
+        const followersCount = response.data.followers_count
+        const followingsCount = response.data.followings_count
+        const followed = response.data.followed
+
+        const followCount = document.querySelector('#follow-count')
+        followCount.innerText = `팔로잉 : ${followingsCount} / 팔로워 : ${followersCount}`
+
+        const followBtn = document.querySelector('#follow-form > button')
+
+        if (followed) {
+          followBtn.innerText = '언팔로우'
+        } else {
+          followBtn.innerText = '팔로우'
+        }
+    })
+  })
+</script>
 {% endblock %}
+
